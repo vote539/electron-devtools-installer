@@ -3,7 +3,28 @@ import fs from 'fs';
 import { https } from 'follow-redirects';
 import path from 'path';
 import rimraf from 'rimraf';
-import unzip from 'cross-unzip';
+import crossUnZip from 'cross-unzip';
+import { spawn } from 'child_process';
+
+
+let unzip = crossUnZip;
+if (process.platform === 'linux') {
+  unzip = (zip, target, cb) => {
+    const proc = spawn('unzip', [zip, '-d', target]);
+    let error = '';
+    proc.stdout.on('data', () => {});
+    proc.stderr.on('data', (data) => { error += data; });
+    proc.on('close', (code) => {
+      console.log(code);
+      console.log(error);
+      if (code === 0) return cb();
+      if (code === 1 && fs.existsSync(path.resolve(target, 'manifest.json'))) {
+        return cb();
+      }
+      cb(error);
+    });
+  };
+}
 
 const downloadChromeExtension = (chromeStoreID, forceDownload) => {
   if (!remote) {
@@ -25,7 +46,9 @@ const downloadChromeExtension = (chromeStoreID, forceDownload) => {
       https.get(fileURL, (response) => {
         response
           .pipe(download)
+          .on('data', () => console.log('data'))
           .on('close', () => {
+            console.log('Downloaded');
             unzip(path.resolve(`${extensionFolder}.crx`), extensionFolder, (err) => {
               if (err) return reject(err);
               resolve(extensionFolder);
