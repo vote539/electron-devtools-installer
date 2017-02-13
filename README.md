@@ -21,6 +21,17 @@ installExtension(REACT_DEVELOPER_TOOLS)
     .catch((err) => console.log('An error occurred: ', err));
 ```
 
+or, if you can't use the `import` keyword,
+
+```js
+const edi = require("electron-devtools-installer");
+edi.default(edi.VUEJS_DEVTOOLS)
+    .then((name) => console.log(`Added Extension:  ${name}`))
+    .catch((err) => console.log('An error occurred: ', err));
+```
+
+Put the code in the `electron.app.on("ready")` callback.
+
 ## What extensions can I use?
 
 Technically you can use whatever extension you want.  Simply find the ChromeStore ID
